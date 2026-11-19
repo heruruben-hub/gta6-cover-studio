@@ -3,21 +3,89 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
+<title>Vice Panels — GTA-Style Cover Maker</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
-  </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
-</main>
+<div class="shell">
+  <aside class="panel">
+    <header class="brand">
+      <h1>Vice Panels</h1>
+      <p class="tagline">Turn your photos into a multi-panel cover poster in the GTA style: bold
+      caption lettering, white panel borders and a Vice City colour grade. Everything runs on your
+      own machine — your photos are never uploaded.</p>
+    </header>
+
+    <section>
+      <h2>1 · Photos</h2>
+      <label class="upload">Add your photos
+        <input id="photo-file" type="file" accept="image/*" multiple hidden>
+      </label>
+      <p class="hint">…or drag photos anywhere onto this page. Six samples are loaded to start.</p>
+      <div id="tray" class="tray"></div>
+      <p class="hint">Click a photo, then click a panel of the cover to put it there.</p>
+    </section>
+
+    <section>
+      <h2>2 · Layout &amp; fill</h2>
+      <div id="layouts" class="chips"></div>
+      <div class="toggle">
+        <button id="mode-panels" type="button" class="active">Panel by panel</button>
+        <button id="mode-spread" type="button">One photo spread</button>
+      </div>
+      <label class="row">Zoom
+        <input id="zoom" type="range" min="1" max="4" step="0.01" value="1">
+      </label>
+      <button id="reset-view" type="button" class="ghost">Reset position &amp; zoom</button>
+      <p class="hint">Drag on the cover to reposition the selected panel's photo; scroll to zoom it.</p>
+    </section>
+
+    <section>
+      <h2>3 · Caption &amp; look</h2>
+      <label>Headline
+        <input id="caption" type="text" maxlength="42" value="Vice Heat">
+      </label>
+      <label>Kicker line
+        <input id="sub" type="text" maxlength="42" value="One Last Score">
+      </label>
+      <div class="grid2">
+        <label>Caption position
+          <select id="caption-pos">
+            <option value="bottom" selected>Bottom</option>
+            <option value="top">Top</option>
+          </select>
+        </label>
+        <label>Colour grade
+          <select id="grade"></select>
+        </label>
+        <label>Lettering
+          <select id="lettering">
+            <option value="white" selected>Poster white</option>
+            <option value="sunset">Sunset gradient</option>
+            <option value="neon">Neon gradient</option>
+          </select>
+        </label>
+        <label>Post size
+          <select id="size"></select>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>4 · Export</h2>
+      <button id="export" type="button" class="primary">Export PNG at post size</button>
+      <div class="quick">
+        <button type="button" class="quick-export ghost" data-size="1080x1080">Square 1080 × 1080</button>
+        <button type="button" class="quick-export ghost" data-size="1080x1350">Portrait 1080 × 1350</button>
+        <button type="button" class="quick-export ghost" data-size="1920x1080">Landscape 1920 × 1080</button>
+      </div>
+      <p id="status" role="status"></p>
+    </section>
+  </aside>
+  <main class="stage-wrap">
+    <canvas id="stage" width="1080" height="1350" aria-label="Live preview of your cover"></canvas>
+  </main>
+</div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

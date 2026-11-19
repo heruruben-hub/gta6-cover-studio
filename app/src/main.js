@@ -1,51 +1,75 @@
-// Wires the page: pick a photo, type a caption, export the square cover as a PNG. A `?shot=` query sets up a fixed
-// scene for a screenshot instead (./shots.js).
-import { drawCover } from './cover.js';
-import { runShot } from './shots.js';
+// App bootstrap: loads the display fonts and the bundled sample photos, starts the editor, and
+// applies screenshot parameters when the maker asks for them.
 
-const canvas = document.getElementById('cover');
-const caption = document.getElementById('caption');
-const status = document.getElementById('status');
-let photo = null;
+import { initEditor } from './editor.js';
+import { SAMPLE_PHOTOS, createState, makePhoto } from './state.js';
+import { applyShotParams, enterCoverShotMode } from './shot.js';
 
-function redraw() {
-  drawCover(canvas, photo, caption.value);
-}
-
-/** Loads an image from a URL, resolving to the image once it can be drawn. */
-export function loadImage(url) {
+function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = url;
+    img.src = src;
   });
 }
 
-document.getElementById('photo').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  photo = await loadImage(URL.createObjectURL(file));
-  redraw();
-});
-caption.addEventListener('input', redraw);
-document.getElementById('export').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'cover-1080x1080.png';
-    a.click();
-    status.textContent = 'Saved cover-1080x1080.png';
-  }, 'image/png');
-});
-
-const shot = new URLSearchParams(location.search).get('shot');
-if (shot) {
-  runShot(shot, new URLSearchParams(location.search), async (sample, text) => {
-    photo = await loadImage(sample);
-    caption.value = text;
-    redraw();
-  });
-} else {
-  redraw();
+async function loadDisplayFonts() {
+  try {
+    await Promise.race([
+      Promise.all([document.fonts.load('80px Anton'), document.fonts.load('20px "Archivo Black"')]),
+      new Promise((resolve) => setTimeout(resolve, 2500)),
+    ]);
+  } catch {
+    // The canvas falls back to a heavy sans-serif; the app still works.
+  }
 }
+
+function collectElements() {
+  const byId = (id) => document.getElementById(id);
+  return {
+    canvas: byId('stage'),
+    fileInput: byId('photo-file'),
+    tray: byId('tray'),
+    layouts: byId('layouts'),
+    modePanels: byId('mode-panels'),
+    modeSpread: byId('mode-spread'),
+    caption: byId('caption'),
+    sub: byId('sub'),
+    captionPos: byId('caption-pos'),
+    grade: byId('grade'),
+    lettering: byId('lettering'),
+    size: byId('size'),
+    zoom: byId('zoom'),
+    resetView: byId('reset-view'),
+    exportButton: byId('export'),
+    quickExports: [...document.querySelectorAll('.quick-export')],
+    status: byId('status'),
+  };
+}
+
+async function main() {
+  const state = createState();
+  await loadDisplayFonts();
+  const photosByName = new Map();
+  for (const sample of SAMPLE_PHOTOS) {
+    const img = await loadImage(sample.src);
+    const photo = makePhoto(img, sample.name);
+    photosByName.set(sample.name, photo);
+    state.photos.push(photo);
+  }
+  const editor = initEditor(state, collectElements());
+  const shot = applyShotParams(state, new URLSearchParams(location.search), photosByName);
+  if (shot) {
+    editor.rebuildTray();
+    if (shot === 'cover') {
+      enterCoverShotMode();
+      editor.drawClean();
+    } else {
+      editor.redraw();
+    }
+  }
+  document.body.dataset.ready = '1';
+}
+
+main();
